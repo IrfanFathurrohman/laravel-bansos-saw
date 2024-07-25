@@ -2,82 +2,84 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Pengajuan;
 use App\Models\Bansos;
 use App\Models\Kriteria;
+use App\Models\Pengajuan;
 use App\Models\Warga;
+use Illuminate\Http\Request;
 
 class PengajuanController extends Controller
 {
-    // Display the list of pengajuans
     public function index()
     {
-        $pengajuans = Pengajuan::with(['bansos', 'kriteria', 'warga'])->get();
-
-        return view('pengajuan.index', compact('pengajuans'));
+        $pengajuans = Pengajuan::with('bansos', 'kriteria', 'warga')->get();
+        return view('pengajuan', [
+            'pengajuans' => $pengajuans,
+            'warga' => Warga::all(),
+            'bansos' => Bansos::all()
+        ]);
     }
 
-    // Show the form for creating a new pengajuan
     public function create()
     {
-        $bansos = Bansos::all();
-        $kriteria = Kriteria::all();
-        $wargas = Warga::all();
-        return view('pengajuan.create', compact('bansos', 'kriteria', 'wargas'));
+        return view('pengajuan', [
+            'warga' => Warga::all(),
+            'bansos' => Bansos::all()
+        ]);
     }
 
-    // Store a newly created pengajuan in storage
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'warga_id' => 'required|exists:warga,id',
             'bansos_id' => 'required|exists:bansos,id',
-            'kriteria_id' => 'required|exists:kriteria,id',
-            'nilai' => 'required|numeric',
-            'nik' => 'required|exists:wargas,nik',
+            'nilai.*' => 'required|numeric'
         ]);
 
-        Pengajuan::updateOrCreate(
-            ['id' => $request->id],
-            $request->all()
-        );
+        foreach ($validated['nilai'] as $kriteria_id => $nilai) {
+            Pengajuan::updateOrCreate(
+                ['bansos_id' => $validated['bansos_id'], 'kriteria_id' => $kriteria_id, 'warga_id' => $validated['warga_id']],
+                ['nilai' => $nilai]
+            );
+        }
 
-        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan saved successfully');
+        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan berhasil disimpan!');
     }
 
-    // Show the form for editing the specified pengajuan
     public function edit($id)
     {
-        $pengajuan = Pengajuan::findOrFail($id);
-        $bansos = Bansos::all();
-        $kriteria = Kriteria::all();
-        $wargas = Warga::all();
-        return view('pengajuan.edit', compact('pengajuan', 'bansos', 'kriteria', 'wargas'));
+        $pengajuanEdit = Pengajuan::findOrFail($id);
+        return view('pengajuan', [
+            'pengajuanEdit' => $pengajuanEdit,
+            'warga' => Warga::all(),
+            'bansos' => Bansos::all()
+        ]);
     }
 
-    // Update the specified pengajuan in storage
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'warga_id' => 'required|exists:warga,id',
             'bansos_id' => 'required|exists:bansos,id',
-            'kriteria_id' => 'required|exists:kriteria,id',
-            'nilai' => 'required|numeric',
-            'nik' => 'required|exists:wargas,nik',
+            'nilai.*' => 'required|numeric'
         ]);
 
-        $pengajuan = Pengajuan::findOrFail($id);
-        $pengajuan->update($request->all());
+        foreach ($validated['nilai'] as $kriteria_id => $nilai) {
+            Pengajuan::updateOrCreate(
+                ['id' => $id, 'bansos_id' => $validated['bansos_id'], 'kriteria_id' => $kriteria_id, 'warga_id' => $validated['warga_id']],
+                ['nilai' => $nilai]
+            );
+        }
 
-        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan updated successfully');
+        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan berhasil diperbarui!');
     }
 
-    // Remove the specified pengajuan from storage
     public function destroy($id)
     {
         $pengajuan = Pengajuan::findOrFail($id);
         $pengajuan->delete();
 
-        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan deleted successfully');
+        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan berhasil dihapus!');
     }
 
     public function fetchKriteria(Request $request)

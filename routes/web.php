@@ -72,17 +72,14 @@ Route::resource('penilaian', PenilaianController::class);
 
 Route::resource('pengajuan', PengajuanController::class);
 
-// routes/web.php
-
 Route::prefix('pengajuan')->group(function () {
     Route::get('/', [PengajuanController::class, 'index'])->name('pengajuan.index');
     Route::get('create', [PengajuanController::class, 'create'])->name('pengajuan.create');
     Route::post('store', [PengajuanController::class, 'store'])->name('pengajuan.store');
-    Route::get('edit/{id}', [PengajuanController::class, 'edit'])->name('pengajuan.edit');
-    Route::post('update/{id}', [PengajuanController::class, 'update'])->name('pengajuan.update');
-    Route::get('delete/{id}', [PengajuanController::class, 'destroy'])->name('pengajuan.destroy');
+    Route::get('{id}/edit', [PengajuanController::class, 'edit'])->name('pengajuan.edit');
+    Route::put('{id}', [PengajuanController::class, 'update'])->name('pengajuan.update');
+    Route::delete('{id}', [PengajuanController::class, 'destroy'])->name('pengajuan.destroy');
 });
-
 
 Route::post('fetch-kriteria', [PengajuanController::class, 'fetchKriteria'])->name('fetch.kriteria');
 
